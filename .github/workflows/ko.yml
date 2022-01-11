@@ -3,6 +3,8 @@ name: Publish
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: [main]
 
 jobs:
   publish:
@@ -17,5 +19,8 @@ jobs:
       - uses: imjasonh/setup-ko@v0.4
         env:
           KO_DOCKER_REPO: magicleap/tfmodules
-
-      - run: ko publish ./cmd/tfregistry --bare
+      - env:
+          auth_token: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "${auth_token}" | ko login --username magicleapcloud --password-stdin
+          ko publish ./cmd/tfmodules --bare
