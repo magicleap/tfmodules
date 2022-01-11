@@ -1,4 +1,4 @@
-name: Publish
+name: Ko
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
 jobs:
   publish:
     name: Publish
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
