@@ -22,5 +22,5 @@ jobs:
       - env:
           auth_token: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "${auth_token}" | ko login https://index.docker.io/v1/ --username magicleapcloud --password-stdin
+          echo "${auth_token}" | ko login index.docker.io --username magicleapcloud --password-stdin
           ko publish ./cmd/tfmodules --bare
