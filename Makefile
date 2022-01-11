@@ -37,7 +37,7 @@ local:
 
 .PHONY: doc
 doc:
-	openapi-generator generate -i api/modules.yaml -g markdown --skip-validate-spec -o docs
+	openapi-generator generate -i api/modules.yaml -g markdown --skip-validate-spec -o docs/api
 
 .PHONY: test
 test:
