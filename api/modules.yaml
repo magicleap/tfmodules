@@ -1,0 +1,252 @@
+openapi: "3.0.0"
+info:
+  description: |
+    Implements the TF modules registry API as defined in https://www.terraform.io/docs/internals/module-registry-protocol.html.
+    It also implements the API compatible with RenovateBot scanning (https://docs.renovatebot.com/)
+  version: "0.0.1"
+  title: Terraform Modules Registry
+  termsOfService: http://swagger.io/terms/
+
+  contact:
+    email: sre@magicleap.com
+
+paths:
+  /.well-known/terraform.json:
+    get:
+      summary: Discovery process
+      description: |
+        Returns a json response to implement discovery process by Terraform
+        The returned JSON contains the paths for each API versions. Here we implement only the v1.
+        See more in https://www.terraform.io/internals/remote-service-discovery
+      operationId: Discovery
+      responses:
+        "200":
+          description: sends a simple json for discovery process
+          content:
+            application/json:
+              schema:
+                properties:
+                  modules.v1:
+                    type: string
+
+  /{namespace}/{name}/{system}/versions:
+    get:
+      summary: List module versions
+      description: |
+        Returns the available versions for a given fully-qualified module.
+        This is required by Terraform client to get the modules.
+        See more in https://www.terraform.io/internals/module-registry-protocol#list-available-versions-for-a-specific-module
+      operationId: ListVersions
+      parameters:
+        - $ref: "#/components/parameters/namespace"
+        - $ref: "#/components/parameters/name"
+        - $ref: "#/components/parameters/system"
+      responses:
+        "200":
+          $ref: "#/components/responses/ReturnedVersions"
+        "418":
+          $ref: "#/components/responses/Invalid"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /{namespace}/{name}/{system}/{version}/download:
+    get:
+      summary: Download module source
+      description: |
+        This does not actually download the module tarball, but sends a link to the tarball.
+        The tarball could be hosted in another domain tha the API. Not the case here.
+        See more in https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
+      operationId: GetDownloadLink
+      parameters:
+        - $ref: "#/components/parameters/namespace"
+        - $ref: "#/components/parameters/name"
+        - $ref: "#/components/parameters/system"
+        - $ref: "#/components/parameters/version"
+      responses:
+        "204":
+          description: Returns the URL to download the binary
+          headers:
+            X-Terraform-Get:
+              description: URL to download the module tarball
+              schema:
+                type: string
+        "418":
+          $ref: "#/components/responses/Invalid"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /{namespace}/{name}/{system}/{version}/archive.tgz:
+    get:
+      summary: Actually download tarball
+      description: |
+        Actually download module source. The API contains `.tgz` to force the autodetection from Terraform
+        See more in https://www.terraform.io/language/modules/sources#fetching-archives-over-http
+      operationId: Download
+      parameters:
+        - $ref: "#/components/parameters/namespace"
+        - $ref: "#/components/parameters/name"
+        - $ref: "#/components/parameters/system"
+        - $ref: "#/components/parameters/version"
+      responses:
+        "200":
+          description: download module file as targz
+          content:
+            application/x-gzip:
+              schema:
+                type: string
+                format: binary
+        "418":
+          $ref: "#/components/responses/Invalid"
+
+  /{namespace}/{name}/{system}:
+    get:
+      summary: Latest Version for a Specific Module Provider
+      description: |
+        Returns the latest version of a module for a single provider.
+        This API is not part of the Terraform module protocol but is needed for RenovateBot support.
+        This API is defined in official Terraform registry.
+        The complete response is not implemented, but only the fields that are needed by RenovateBot
+        See more in https://www.terraform.io/registry/api-docs#latest-version-for-a-specific-module-provider
+      operationId: GetLatestVersion
+      parameters:
+        - $ref: "#/components/parameters/namespace"
+        - $ref: "#/components/parameters/name"
+        - $ref: "#/components/parameters/system"
+      responses:
+        # Returms a list of versions, size 1
+        "200":
+          $ref: "#/components/responses/ReturnedModule"
+        "418":
+          $ref: "#/components/responses/Invalid"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /{namespace}/{name}/{system}/{version}:
+    post:
+      summary: Upload module version
+      description: |
+        Uploads a module tarball to the registry.
+        This API is not defined in Terraform protocol. It is an helper to push new nodules to the registry.
+        It takes as extra optional parameter the `source` which is the code source, that will enable RenovateBot
+        to detect an scan the CHANGELOG.md (if existing)
+      operationId: Upload
+      parameters:
+        - $ref: "#/components/parameters/namespace"
+        - $ref: "#/components/parameters/name"
+        - $ref: "#/components/parameters/system"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/source"
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+        "201":
+          description: Successfully Uploaded
+        "418":
+          $ref: "#/components/responses/Invalid"
+        "403":
+          description: The uploaded version already exists in the storage. You cannot overwrite it.
+
+components:
+  parameters:
+    namespace:
+      name: namespace
+      in: path
+      description: unique on a particular hostname, that can contain one or more modules that are somehow related
+      required: true
+      schema:
+        type: string
+    name:
+      name: name
+      in: path
+      description: module name
+      required: true
+      schema:
+        type: string
+    system:
+      name: system
+      in: path
+      description: remote system that the module is primarily written to target (aws, gcp, ...)
+      required: true
+      schema:
+        type: string
+    version:
+      name: version
+      in: path
+      description: version of the module
+      required: true
+      schema:
+        type: string
+    source:
+      name: module-source
+      in: header
+      description: code URL of the module
+      required: false
+      schema:
+        type: string
+
+  responses:
+    NotFound:
+      description: Module not found
+
+    Invalid:
+      description: Invalid request
+
+    ReturnedVersions:
+      description: list of versions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ModuleRegistry"
+
+    ReturnedModule:
+      description: details of the latest module
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ModuleDetails"
+
+  schemas:
+    ModuleRegistry:
+      type: object
+      properties:
+        modules:
+          type: array
+          items:
+            $ref: "#/components/schemas/Module"
+
+    Module:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModuleVersion"
+
+    ModuleVersion:
+      type: object
+      properties:
+        version:
+          type: string
+
+    ModuleDetails:
+      type: object
+      properties:
+        namespace:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        provider:
+          type: string
+        source:
+          type: string
+        published_at:
+          type: string
+        versions:
+          type: array
+          items:
+            type: string
