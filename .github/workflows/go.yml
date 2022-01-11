@@ -7,19 +7,23 @@ on:
     branches: [ main ]
 
 jobs:
-
   build:
+    env:
+      CGO_ENABLED: "0"
+      GO111MODULE: "on"
+      GOLANG_VERSION: 1.17
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
-
-    - name: Build
-      run: go build -v ./...
-
+        go-version: ${{ env.GOLANG_VERSION }}
     - name: Test
-      run: go test -v ./...
+      run: go test -v ./...     
+    - name: Run golangci-lint with reviewdog
+      uses: reviewdog/action-golangci-lint@v2
+      with:
+        level: warning
+        fail_on_error: true
+        go_version: ${{ env.GOLANG_VERSION }}
