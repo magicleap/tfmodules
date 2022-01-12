@@ -1,0 +1,47 @@
+name: Test and Publish
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ["main"]
+
+env:
+  GOLANG_VERSION: 1.17
+  CGO_ENABLED: "0"
+  GO111MODULE: "on"
+  KO_DOCKER_REPO: magicleap/tfmodules
+
+jobs:
+  test:
+    name: Validate Go code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - name: Unit Test
+        run: go test -v ./...
+      - name: Go Lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          level: warning
+          fail_on_error: true
+          go_version: ${{ env.GOLANG_VERSION }}
+
+  publish:
+    name: Publish image
+    needs: [test]
+    # We skip image publish on pull requests
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+      - uses: actions/checkout@v2
+      - uses: imjasonh/setup-ko@v0.4
+      - run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | ko login index.docker.io --username magicleapcloud --password-stdin
+          ko publish ./cmd/tfmodules --bare -t $(cat VERSION)
