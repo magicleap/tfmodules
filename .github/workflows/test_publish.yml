@@ -1,5 +1,9 @@
 name: Test and Publish
-on: [push, pull_request]
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ["main"]
 
 env:
   GOLANG_VERSION: 1.17
@@ -26,10 +30,11 @@ jobs:
           fail_on_error: true
           go_version: ${{ env.GOLANG_VERSION }}
 
-  # We skip image publish on pull requests
   publish:
     name: Publish image
     needs: [test]
+    # We skip image publish on pull requests
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
