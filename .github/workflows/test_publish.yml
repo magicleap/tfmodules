@@ -9,7 +9,7 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Validate Go code
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -28,8 +28,8 @@ jobs:
 
   # We skip image publish on pull requests
   publish:
-    name: Publish
-    needs: [build]
+    name: Publish image
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v2
