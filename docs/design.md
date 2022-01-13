@@ -12,8 +12,6 @@ The important fields from the response are :
 - `version` : returns the latest version in the registry
 - `source` : returns the URL of the code repository where `renovate` can fetch the CHANGELOG of the module and display the difference between the versions
 
-You will find more details on the APIs in [./api/README.md]
-
 ## OpenAPI v3
 
 We have chosen to use OpenAPI v3 format to specify the APIs and the responses (`api/modules.yaml`). The [`oapi-codegen`](https://github.com/deepmap/oapi-codegen) tool helps generating the server code based on the API specs.
@@ -47,8 +45,6 @@ GCS API offers a way to return only selected metadata, which makes an efficient 
 The metadata we use is actually quite small : we only need the version of the module (`x-module-version`) used to list the available versions and the URL of the code source (`x-module-source`) used only by `renovate` for the CHANGELOG analysis.
 
 ## APIs analysis
-
-See also [api/README.md]
 
 ### Discovery API
 

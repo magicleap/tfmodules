@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tfmodules
+  namespace: tfmodules
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tfmodules
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tfmodules
+    spec:
+      containers:
+        - name: tfmodules
+          env:
+            - name: GOOGLE_BUCKET
+              value: tfmodules-registry
+          image: magicleap/tfmodules
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+      serviceAccountName: tfmodules
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tfmodules
+  namespace: tfmodules
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: tfmodules
+  type: ClusterIP

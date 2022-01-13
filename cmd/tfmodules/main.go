@@ -48,6 +48,7 @@ func main() {
 	utils.SetDefaultValue("LISTEN", "0.0.0.0")
 	utils.SetDefaultValue("BACKEND", "gcs")
 	utils.SetDefaultValue("OVERWRITE", "0")
+	utils.SetDefaultValue("MODULE_PATH", "/")
 
 	addr := fmt.Sprintf("%s:%s", os.Getenv("LISTEN"), os.Getenv("PORT"))
 	logrus.Infof("Listening to %s", addr)
