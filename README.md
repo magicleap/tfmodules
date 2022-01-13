@@ -108,7 +108,9 @@ to detect and scan the CHANGELOG.md (if existing)
 #### Response
 
 **status 201** : success
+
 **status 418** : failure
+
 **status 403** : module already exists when overwriting is disabled
 
 #### Example
