@@ -1,5 +1,5 @@
 # Image to build and push
-KO_DOCKER_REPO := rchalumeau/tfmodules
+KO_DOCKER_REPO := magicleap/tfmodules
 VERSION := $(shell cat VERSION)
 
 # helpers
@@ -34,10 +34,6 @@ local:
 	BACKEND=fake \
 	VERBOSE=1 \
 	go run ${COMMAND}/main.go
-
-.PHONY: doc
-doc:
-	openapi-generator generate -i api/modules.yaml -g markdown --skip-validate-spec -o docs/api
 
 .PHONY: test
 test:

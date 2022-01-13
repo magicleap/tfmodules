@@ -1,0 +1,18 @@
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucket
+metadata:
+  annotations:
+    cnrm.cloud.google.com/force-destroy: "false"
+  name: tfmodules-registry
+  namespace: myproject-cc
+---
+apiVersion: storage.cnrm.cloud.google.com/v1beta1
+kind: StorageBucketAccessControl
+metadata:
+  name: tfmodules-bucket-accesscontrol
+  namespace: myproject-cc
+spec:
+  bucketRef:
+    name: tfmodules-registry
+  entity: sa-for-bucket@ml-delivery-pr.iam.gserviceaccount.com
+  role: WRITER
